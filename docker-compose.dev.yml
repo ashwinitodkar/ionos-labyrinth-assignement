@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  ionos-labyrinth-assignment:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_ENV: dev
+    ports:
+      - "8051:8088"
+    links:
+      - database
+    volumes:
+     - .:/usr/src/app
+     - /usr/src/app/node_modules
+     - /logs:/logs
+    depends_on:
+      - database
+
+  database:
+    image: mongo
+    volumes:
+      - './data:/data/db'
+    ports:
+      - 27037:27017
+
+volumes:
+  logs:
+    external: true 
+    
