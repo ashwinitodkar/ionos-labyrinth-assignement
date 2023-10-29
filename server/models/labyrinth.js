@@ -1,7 +1,12 @@
 const Mongoose = require("mongoose"),
-logger = require('../lib/logger'),
-  Types = Mongoose.Schema.Types;
-
+  logger = require("../lib/logger"),
+  Types = Mongoose.Schema.Types,
+  CellType = {
+    empty: 0,
+    filled: 1,
+    start: 2,
+    end: 3,
+  };
 /**
  * Labyrinth Schema
  */
@@ -21,27 +26,24 @@ const LabyrinthSchema = new Mongoose.Schema({
 
 const Labyrinth = (module.exports = Mongoose.model(modelName, LabyrinthSchema));
 
-module.exports.getLabyrinth = (userId) => {
+module.exports.getUserLabyrinth = (userId) => {
   return Labyrinth.find({
     userId: userId,
   });
 };
 
-module.exports.getLabyrinth = (id, userId) => {
+module.exports.getLabyrinthById = (id) => {
   return Labyrinth.find({
-    userId: userId,
     _id: id,
   });
 };
 
-module.exports.createLabyrinthForUser = (userId) => {
-  const n = 4,
-    m = 7; // Replace with your desired matrix size (e.g., 4x7)
+module.exports.createLabyrinthForUser = (userId, rows, columns) => {
   const matrix = [];
 
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < rows; i++) {
     const row = [];
-    for (let j = 0; j < m; j++) {
+    for (let j = 0; j < columns; j++) {
       row.push({ x: i, y: j, value: 0 }); // Set coordinates and initialize with 0 value
     }
     matrix.push(row);
@@ -50,59 +52,38 @@ module.exports.createLabyrinthForUser = (userId) => {
   // Create a new labyrinth document and insert it into the database
   const newLabyrinth = new Labyrinth({ matrix, userId });
 
-  return Labyrinth.save(newLabyrinth);
-};
-
-// Retrieve and update matrix element
-const x = 1;
-const y = 2;
-const newValue = 42;
-
-//PUT /labyrinth/:id/playfield/:x/:y/:type
-module.exports.updateLabyrinthCell = (id, xCord, yCord, type) => {
-    return Labyrinth.findOne({id})
-    .then((doc) => {
-      if (doc && doc.matrix) {
-        // Update the value at coordinates (x, y)
-        doc.matrix[xCord][yCord].value = type;
-
-        // Save the updated document
-        return doc.save();
-      } else {
-        logger.info("Labyrinth not found.");
-      }
-    })
+  return newLabyrinth.save();
 };
 
 //PUT /labyrinth/:id/playfield/:x/:y/:type
-module.exports.setLabyrinthStart = (id, xCord, yCord) => {
-    return Labyrinth.findOne({id})
-    .then((doc) => {
-      if (doc && doc.matrix) {
-        // Update the value at coordinates (x, y)
-        doc.matrix[xCord][yCord].value = 10;
+module.exports.updateLabyrinthCell = async (id, xCord, yCord, type) => {
+  let doc = await Labyrinth.findOne({ _id: id });
 
-        // Save the updated document
-        return doc.save();
-      } else {
-        logger.info("Labyrinth not found.");
-      }
-    })
+  if (doc && doc.matrix) {
+    doc.matrix[xCord][yCord].value = Number.parseInt(CellType[type]);
+    // Save the updated document
+    return doc.save();
+  }
 };
 
+//PUT /labyrinth/:id/start/:x/:y/
+module.exports.setLabyrinthStart = async (id, xCord, yCord) => {
+  let doc = await Labyrinth.findOne({ _id: id });
 
-//PUT /labyrinth/:id/playfield/:x/:y/:type
-module.exports.setLabyrinthDestination = (id, xCord, yCord) => {
-    return Labyrinth.findOne({id})
-    .then((doc) => {
-      if (doc && doc.matrix) {
-        // Update the value at coordinates (x, y)
-        doc.matrix[xCord][yCord].value = 11;
+  if (doc && doc.matrix) {
+    doc.matrix[xCord][yCord].value = Number.parseInt(CellType.start);
+    // Save the updated document
+    return doc.save();
+  }
+};
 
-        // Save the updated document
-        return doc.save();
-      } else {
-        console.log("Matrix document not found.");
-      }
-    })
+//PUT /labyrinth/:id/end/:x/:y/
+module.exports.setLabyrinthEnd = async (id, xCord, yCord) => {
+  let doc = await Labyrinth.findOne({ _id: id });
+
+  if (doc && doc.matrix) {
+    doc.matrix[xCord][yCord].value = Number.parseInt(CellType.end);
+    // Save the updated document
+    return doc.save();
+  }
 };

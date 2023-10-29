@@ -1,7 +1,7 @@
 'use strict';
 
 const HttpStatusCodes = {
-    OK: { code: 200, message: 'OK' },
+    OK: { code: 200, message: 'Success' },
     CREATED: { code: 201, message: 'Created' },
     NO_CONTENT: { code: 204, message: 'No Content' },
     BAD_REQUEST: { code: 400, message: 'Bad Request' },
