@@ -1,6 +1,7 @@
 "use strict";
 const express = require("express"),
   router = express.Router(),
+  logger = require("../lib/logger"),
   checkAuthentication = require("../middlewares/checkAuthentication"),
   labyrinthRepo = require("../labyrinth/labyrinth.repository"),
   solveLabyrinth = require("./labyrinth.service");
@@ -135,21 +136,19 @@ router.get(
   async (req, res, next) => {
     try {
       let labyrinthObj = await labyrinthRepo.getLabyrinthById(req.params.id);
-      //solve labyrinth
-      //get start and end point
+
+      //retrieve simple 2D array
       console.log(JSON.stringify(labyrinthObj.matrix));
       let labyrinthArray = labyrinthObj.matrix.map((row) =>
         row.map((cell) => cell.value)
       );
 
-      console.log("Retrieved simple 2D array:");
+      logger.info("Retrieved simple 2D array:");
       console.log(labyrinthArray);
 
-      //find start of labyrinth
-      //find end of labyrinth
-
       let directionPath = solveLabyrinth.solveLabyrinthBFS(labyrinthArray);
-      console.log("path::", directionPath);
+      logger.info(`path - ${directionPath}`);
+
       if (directionPath) {
         return res
           .status(global.config.httpStatusCodes.OK.code)

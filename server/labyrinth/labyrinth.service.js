@@ -1,4 +1,5 @@
-const logger = require("../lib/logger");
+const cellValues = require("../../config/labyrinthConfig"),
+logger = require("../lib/logger");
 
 module.exports.solveLabyrinthBFS = function (labyrinth) {
   try {
@@ -22,11 +23,11 @@ module.exports.solveLabyrinthBFS = function (labyrinth) {
     // Find the start and destination points in the labyrinth.
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
-        if (labyrinth[i][j] === 2) {
+        if (labyrinth[i][j] === cellValues.start) {
           startX = i;
           startY = j;
           labyrinth[i][j] = 0;
-        } else if (labyrinth[i][j] === 3) {
+        } else if (labyrinth[i][j] === cellValues.end) {
           endX = i;
           endY = j;
           labyrinth[i][j] = 0;
@@ -81,7 +82,7 @@ module.exports.solveLabyrinthBFS = function (labyrinth) {
           newX < rows &&
           newY >= 0 &&
           newY < cols &&
-          labyrinth[newX][newY] === 0 &&
+          labyrinth[newX][newY] === cellValues.empty &&
           !visited[newX][newY]
         ) {
           // Add the neighbor to the queue with the updated path.
