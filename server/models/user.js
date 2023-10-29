@@ -3,33 +3,22 @@ const Mongoose = require("mongoose"),
 
 const modelName = "User";
 
-  const UserSchema = new Mongoose.Schema(
+const UserSchema = new Mongoose.Schema(
   {
     email: {
       type: Types.String,
-      required: true
+      required: true,
     },
     password: {
       type: Types.String,
-      required: false
+      required: false,
     },
     isActive: {
       type: Types.Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   { timestamps: true }
 );
 
-const User = module.exports = Mongoose.model(modelName, UserSchema);
-
-module.exports.findByEmail = (email) => {
-  return User.findOne({
-      email: email
-  });
-}
-
-module.exports.saveUser = (user) => {
-  let newUser = new User(user);
-  return newUser.save();
-}
+module.exports = Mongoose.model(modelName, UserSchema);

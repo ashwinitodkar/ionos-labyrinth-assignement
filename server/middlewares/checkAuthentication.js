@@ -1,6 +1,6 @@
 "use strict";
 const logger = require("../lib/logger"),
-  userModel = require("../models/user");
+  userRepo = require("../user/user.repository");
 
 module.exports.validateUser = async (req, res, next) => {
   try {
@@ -13,13 +13,13 @@ module.exports.validateUser = async (req, res, next) => {
       password: userCredentials.split(":")[1],
     };
 
-    let existingUser = await userModel.findByEmail(req.user.email);
+    let existingUser = await userRepo.findByEmail(req.user.email);
 
     if (existingUser) {
       req.user.id = existingUser._id;
     } else {
       //save user
-      let savedUser = await userModel.saveUser(req.user);
+      let savedUser = await userRepo.saveUser(req.user);
       req.user.id = savedUser._id;
     }
     next();

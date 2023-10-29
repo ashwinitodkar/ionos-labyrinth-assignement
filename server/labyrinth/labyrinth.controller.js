@@ -2,8 +2,8 @@
 const express = require("express"),
   router = express.Router(),
   checkAuthentication = require("../middlewares/checkAuthentication"),
-  labyrinth = require("../models/labyrinth"),
-  logger = require("../lib/logger");
+  labyrinthRepo = require("../labyrinth/labyrinth.repository"),
+  solveLabyrinth = require("./labyrinth.service");
 
 // create labyrinth
 
@@ -12,7 +12,7 @@ router.post("/", checkAuthentication.validateUser, async (req, res, next) => {
     //create labyeinth for user
     const n = 4,
       m = 7;
-    let labyrinthObj = await labyrinth.createLabyrinthForUser(
+    let labyrinthObj = await labyrinthRepo.createLabyrinthForUser(
       req.user.id,
       n,
       m
@@ -30,7 +30,7 @@ router.post("/", checkAuthentication.validateUser, async (req, res, next) => {
 
 router.get("/", checkAuthentication.validateUser, async (req, res, next) => {
   try {
-    let labyrinthList = await labyrinth.getUserLabyrinth(req.user.id);
+    let labyrinthList = await labyrinthRepo.getUserLabyrinth(req.user.id);
     return res
       .status(global.config.httpStatusCodes.OK.code)
       .json(labyrinthList);
@@ -43,7 +43,7 @@ router.get("/", checkAuthentication.validateUser, async (req, res, next) => {
 
 router.get("/:id", checkAuthentication.validateUser, async (req, res, next) => {
   try {
-    let labyrinthObj = await labyrinth.getLabyrinthById(req.params.id);
+    let labyrinthObj = await labyrinthRepo.getLabyrinthById(req.params.id);
     return res.status(global.config.httpStatusCodes.OK.code).json(labyrinthObj);
   } catch (error) {
     next(error);
@@ -62,7 +62,7 @@ router.put(
     try {
       let params = req.params;
 
-      let updatedLabyrinth = await labyrinth.updateLabyrinthCell(
+      let updatedLabyrinth = await labyrinthRepo.updateLabyrinthCell(
         params.id,
         params.x,
         params.y,
@@ -87,7 +87,7 @@ router.put(
     try {
       let params = req.params;
 
-      let updatedLabyrinth = await labyrinth.setLabyrinthStart(
+      let updatedLabyrinth = await labyrinthRepo.setLabyrinthStart(
         params.id,
         params.x,
         params.y
@@ -103,7 +103,7 @@ router.put(
   }
 );
 
-// update end point of labywrinth
+// update destination point of labywrinth
 router.put(
   "/:id/end/:x/:y",
   checkAuthentication.validateUser,
@@ -111,7 +111,7 @@ router.put(
     try {
       let params = req.params;
 
-      let updatedLabyrinth = await labyrinth.setLabyrinthEnd(
+      let updatedLabyrinth = await labyrinthRepo.setLabyrinthEnd(
         params.id,
         params.x,
         params.y
@@ -127,8 +127,41 @@ router.put(
   }
 );
 
-module.exports = router;
-
-// update destination point of labywrinth
-
 // get solution of labyrinth by id
+
+router.get(
+  "/:id/solution",
+  checkAuthentication.validateUser,
+  async (req, res, next) => {
+    try {
+      let labyrinthObj = await labyrinthRepo.getLabyrinthById(req.params.id);
+      //solve labyrinth
+      //get start and end point
+      console.log(JSON.stringify(labyrinthObj.matrix));
+      let labyrinthArray = labyrinthObj.matrix.map((row) =>
+        row.map((cell) => cell.value)
+      );
+
+      console.log("Retrieved simple 2D array:");
+      console.log(labyrinthArray);
+
+      //find start of labyrinth
+      //find end of labyrinth
+
+      let directionPath = solveLabyrinth.solveLabyrinthBFS(labyrinthArray);
+      console.log("path::", directionPath);
+      if (directionPath) {
+        return res
+          .status(global.config.httpStatusCodes.OK.code)
+          .json({ message: "Solution found", path: directionPath });
+      }
+      return res
+        .status(global.config.httpStatusCodes.OK.code)
+        .json({ message: "No solution found" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+module.exports = router;

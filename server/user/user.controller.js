@@ -1,14 +1,14 @@
 "use strict";
 const express = require("express"),
   router = express.Router(),
-  user = require("../models/user"),
+  userRepo = require("../user/user.repository"),
   logger = require("../lib/logger");
 
 router.get("/login", async (req, res, next) => {
   try {
     const password = req.body.password;
 
-    let existingUser = await user.findByEmail(req.body.email);
+    let existingUser = await userRepo.findByEmail(req.body.email);
     if (existingUser) {
       if (password === existingUser.password) {
         res.json({
@@ -31,13 +31,13 @@ router.get("/login", async (req, res, next) => {
 
 router.post("/register", async (req, res, next) => {
   try {
-    let existingUser = await user.findByEmail(req.body.email);
+    let existingUser = await userRepo.findByEmail(req.body.email);
 
     if (existingUser) {
       res.json({ message: "User exists" });
     } else {
       //save user
-      let savedUser = await user.saveUser(req.body);
+      let savedUser = await userRepo.saveUser(req.body);
       res.json({
         message: "Register Successful",
         user: {
