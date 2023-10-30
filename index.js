@@ -23,7 +23,7 @@ mongoose.connect(() => {
 **/
 app.use(bodyParser.json());
 
-app.use(require('./server/controllers'));
+app.use(require('./server/routes'));
 
 /**
 * Default handler for invalid API endpoint.

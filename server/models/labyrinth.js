@@ -11,7 +11,7 @@ const labyrinthElementSchema = new Mongoose.Schema({
   x: Number,
   y: Number,
   value: Number, // You can use a different data type if needed
-});
+}, { _id : false });
 
 const LabyrinthSchema = new Mongoose.Schema({
   matrix: [[labyrinthElementSchema]],

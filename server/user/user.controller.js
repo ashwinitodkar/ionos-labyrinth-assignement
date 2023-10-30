@@ -1,45 +1,57 @@
-"use strict";
-const express = require("express"),
+'use strict';
+const express = require('express'),
   router = express.Router(),
-  userRepo = require("../user/user.repository"),
-  logger = require("../lib/logger");
+  bcrypt = require('bcrypt'),
+  userRepo = require('../user/user.repository'),
+  userService = require('./user.service'),
+  logger = require('../lib/logger');
 
-router.get("/login", async (req, res, next) => {
+router.get('/login', async (req, res, next) => {
   try {
-    const password = req.body.password;
-
     let existingUser = await userRepo.findByEmail(req.body.email);
-    if (existingUser) {
-      if (password === existingUser.password) {
-        res.json({
-          message: "Login Successful",
-          user: {
-            id: existingUser._id,
-            email: existingUser.email,
-          },
-        });
-      } else {
-        res.send({ message: "Inncorrect Password , Try Again!" });
-      }
-    } else {
-      res.json({ message: "No matching email found" });
+
+    if (!existingUser) {
+      return res
+        .status(global.config.httpStatusCodes.NOT_FOUND.code)
+        .json({ message: 'User does not exists' });
     }
+
+    const isValidUser = await userService.comparePassword(
+      req.body.password,
+      existingUser.hash
+    );
+
+    if (!isValidUser) {
+      return res
+        .status(global.config.httpStatusCodes.UNAUTHORIZED.code)
+        .json({ error: 'Authentication failed' });
+    }
+
+    res
+      .status(global.config.httpStatusCodes.OK.code)
+      .json({ message: 'Login Successful' });
   } catch (e) {
+    // log error
     next(e);
   }
 });
 
-router.post("/register", async (req, res, next) => {
+router.post('/register', async (req, res, next) => {
   try {
     let existingUser = await userRepo.findByEmail(req.body.email);
 
     if (existingUser) {
-      res.json({ message: "User exists" });
+      res.json({ message: 'User already exists' });
     } else {
       //save user
-      let savedUser = await userRepo.saveUser(req.body);
-      res.json({
-        message: "Register Successful",
+
+      const savedUser = await userService.registerUser(
+        req.body.email,
+        req.body.password
+      );
+
+      res.status(global.config.httpStatusCodes.OK.code).json({
+        message: 'Register Successful',
         user: {
           id: savedUser._id,
           email: savedUser.email,
@@ -47,7 +59,10 @@ router.post("/register", async (req, res, next) => {
       });
     }
   } catch (e) {
-    next(e);
+    console.log(e);
+    return res
+      .status(global.config.httpStatusCodes.INTERNAL_SERVER_ERROR.code)
+      .json({ error: 'Registration failed' });
   }
 });
 
