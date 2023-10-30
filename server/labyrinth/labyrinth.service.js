@@ -1,39 +1,25 @@
-const cellValues = require("../../config/labyrinthConfig"),
-logger = require("../lib/logger");
+const labyrinthConfig = require("../../config/labyrinthConfig"),
+  logger = require("../lib/logger");
 
 module.exports.solveLabyrinthBFS = function (labyrinth) {
   try {
     const rows = labyrinth.length;
     const cols = labyrinth[0].length;
+
     let directionPath = null;
 
-    // Define directions for moving up, down, left, and right.
-    const directions = [
-      [-1, 0], // Up
-      [1, 0], // Down
-      [0, -1], // Left
-      [0, 1], // Right
-    ];
-
-    let startX = null;
-    let startY = null;
-    let endX = null;
-    let endY = null;
-
-    // Find the start and destination points in the labyrinth.
-    for (let i = 0; i < rows; i++) {
-      for (let j = 0; j < cols; j++) {
-        if (labyrinth[i][j] === cellValues.start) {
-          startX = i;
-          startY = j;
-          labyrinth[i][j] = 0;
-        } else if (labyrinth[i][j] === cellValues.end) {
-          endX = i;
-          endY = j;
-          labyrinth[i][j] = 0;
-        }
-      }
+    if (!isValidLabyrinth(labyrinth)) {
+      return { path: directionPath, message: "Invalid labyrinth input" };
     }
+
+    if (!areLabyrinthDimensionsValid(labyrinth)) {
+      return {
+        path: directionPath,
+        message: "Labyrinth must have at least 2 rows and 2 columns.",
+      };
+    }
+
+    const { startX, startY, endX, endY } = findStartAndEndPoints(labyrinth);
 
     // Create a queue for BFS, each element contains the x, y coordinates and the path to it.
     const queue = [{ x: startX, y: startY, path: [] }];
@@ -54,9 +40,9 @@ module.exports.solveLabyrinthBFS = function (labyrinth) {
 
       // Check if we've reached the destination.
       if (x === endX && y === endY) {
-        console.log("Solution found:");
         directionPath = path.map((coord, index) => {
           if (index === 0) return "";
+
           const [prevX, prevY] = path[index - 1];
           const [currentX, currentY] = coord;
           const dx = currentX - prevX;
@@ -68,12 +54,12 @@ module.exports.solveLabyrinthBFS = function (labyrinth) {
           if (dy === -1) return "left";
         });
 
-        console.log(directionPath.join(" "));
-        return directionPath;
+        logger.info(directionPath.join(" "));
+        return { path: directionPath, message: "Solution Found" };
       }
 
       // Explore all four possible directions.
-      for (const [dx, dy] of directions) {
+      for (const [dx, dy] of labyrinthConfig.directions) {
         const newX = x + dx;
         const newY = y + dy;
 
@@ -82,7 +68,7 @@ module.exports.solveLabyrinthBFS = function (labyrinth) {
           newX < rows &&
           newY >= 0 &&
           newY < cols &&
-          labyrinth[newX][newY] === cellValues.empty &&
+          labyrinth[newX][newY] === labyrinthConfig.cellValues.empty &&
           !visited[newX][newY]
         ) {
           // Add the neighbor to the queue with the updated path.
@@ -90,9 +76,45 @@ module.exports.solveLabyrinthBFS = function (labyrinth) {
         }
       }
     }
-    return directionPath;
+    return { path: directionPath, message: "Solution Not Found" };
   } catch (e) {
     logger.error(`Error solving labyrinth ${e.error} ${e.stack}`);
-    return null;
+    return { path: directionPath, message: "Error" };
   }
 };
+
+function findStartAndEndPoints(labyrinth) {
+  let startX = null;
+  let startY = null;
+  let endX = null;
+  let endY = null;
+  const rows = labyrinth.length;
+  const cols = labyrinth[0].length;
+
+  // Find the start and destination points in the labyrinth.
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      if (labyrinth[i][j] === labyrinthConfig.cellValues.start) {
+        startX = i;
+        startY = j;
+        labyrinth[i][j] = 0;
+      } else if (labyrinth[i][j] === labyrinthConfig.cellValues.end) {
+        endX = i;
+        endY = j;
+        labyrinth[i][j] = 0;
+      }
+    }
+  }
+
+  return { startX, startY, endX, endY };
+}
+
+function isValidLabyrinth(labyrinth) {
+  return Array.isArray(labyrinth) && labyrinth.length > 0;
+}
+
+function areLabyrinthDimensionsValid(labyrinth) {
+  const rows = labyrinth.length;
+  const cols = labyrinth[0].length;
+  return rows >= 2 && cols >= 2;
+}

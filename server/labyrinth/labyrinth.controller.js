@@ -3,6 +3,7 @@ const express = require("express"),
   router = express.Router(),
   logger = require("../lib/logger"),
   checkAuthentication = require("../middlewares/checkAuthentication"),
+  labyrinthConfig = require("../../config/labyrinthConfig"),
   labyrinthRepo = require("../labyrinth/labyrinth.repository"),
   solveLabyrinth = require("./labyrinth.service");
 
@@ -10,14 +11,13 @@ const express = require("express"),
 
 router.post("/", checkAuthentication.validateUser, async (req, res, next) => {
   try {
-    //create labyeinth for user
-    const n = 4,
-      m = 7;
-    let labyrinthObj = await labyrinthRepo.createLabyrinthForUser(
+    //create labyrinth for user
+    let labyrinthObj = await labyrinthRepo.createEmptyLabyrinthForUser(
       req.user.id,
-      n,
-      m
+      labyrinthConfig.numberOfRows,
+      labyrinthConfig.numberOfColumns
     );
+
     return res.status(global.config.httpStatusCodes.CREATED.code).json({
       message: global.config.httpStatusCodes.CREATED.message,
       id: labyrinthObj._id,
@@ -35,8 +35,8 @@ router.get("/", checkAuthentication.validateUser, async (req, res, next) => {
     return res
       .status(global.config.httpStatusCodes.OK.code)
       .json(labyrinthList);
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 });
 
@@ -46,8 +46,8 @@ router.get("/:id", checkAuthentication.validateUser, async (req, res, next) => {
   try {
     let labyrinthObj = await labyrinthRepo.getLabyrinthById(req.params.id);
     return res.status(global.config.httpStatusCodes.OK.code).json(labyrinthObj);
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 });
 
@@ -146,19 +146,15 @@ router.get(
       logger.info("Retrieved simple 2D array:");
       console.log(labyrinthArray);
 
-      let directionPath = solveLabyrinth.solveLabyrinthBFS(labyrinthArray);
-      logger.info(`path - ${directionPath}`);
+      let solution = solveLabyrinth.solveLabyrinthBFS(labyrinthArray);
+      logger.info(`path - ${solution.path}`);
 
-      if (directionPath) {
-        return res
-          .status(global.config.httpStatusCodes.OK.code)
-          .json({ message: "Solution found", path: directionPath });
+      if (solution.path) {
+        return res.status(global.config.httpStatusCodes.OK.code).json(solution);
       }
-      return res
-        .status(global.config.httpStatusCodes.OK.code)
-        .json({ message: "No solution found" });
-    } catch (error) {
-      next(error);
+      return res.status(global.config.httpStatusCodes.OK.code).json(solution);
+    } catch (e) {
+      next(e);
     }
   }
 );

@@ -1,6 +1,6 @@
 module.exports = {
-    environmentName: process.env.NODE_ENV,
-    appPort: process.env.APP_PORT,
+    environmentName: process.env.NODE_ENV || 'dev',
+    appPort: process.env.APP_PORT || 3000,
     protocol: 'http://',
     domain: 'localhost',
     secret: 'ionos-secret',
