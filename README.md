@@ -143,6 +143,23 @@ Authorization: Basic ...
 
 solution is the array of directions in the following format:
 
+
+## Command to run project
 ```
-['left', 'up', 'right', 'down', 'down', 'down']
+docker-compose -f docker-compose.dev.yml up --build
+
+```
+
+```
+API to test
+
+curl --location --request POST 'localhost:8051/api/labyrinth' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic YXNod2luaS5wcmFqYXBhdGlAZ21haWwuY29tOmdtYWlsQDEyMw==' \
+--data ''
+
+
+curl --location 'localhost:8051/api/labyrinth/' \
+--header 'Authorization: Basic YXNod2luaS5wcmFqYXBhdGlAZ21haWwuY29tOmdtYWlsQDEyMw=='
+
 ```
